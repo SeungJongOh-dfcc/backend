@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Req,
   Res,
@@ -12,6 +13,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -54,5 +56,15 @@ export class AuthController {
       sameSite: 'lax',
     });
     return { message: '로그아웃 완료' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password')
+  async changePassword(
+    @Req() req,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    await this.authService.changePassword(req.user.userId, dto);
+    return { message: '비밀번호가 성공적으로 변경되었습니다.' };
   }
 }
