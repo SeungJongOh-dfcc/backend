@@ -1,25 +1,39 @@
+// test/app.e2e-spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '../src/modules/user/entities/user.entity'; // 실제 경로에 맞게 조정
+import { UserModule } from '../src/modules/user/user.module';
+import { AuthModule } from '../src/modules/auth/auth.module'; // 실제 경로에 맞게 조정
 import * as request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+describe('App E2E Test (SQLite in-memory)', () => {
+  let app: INestApplication;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [
+        TypeOrmModule.forRoot({
+          type: 'sqlite',
+          database: ':memory:',
+          entities: [User],
+          synchronize: true,
+        }),
+        TypeOrmModule.forFeature([User]),
+        UserModule,
+        AuthModule,
+      ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  it('/user (GET) should return empty array initially', () => {
+    return request(app.getHttpServer()).get('/user').expect(200).expect([]);
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 });
