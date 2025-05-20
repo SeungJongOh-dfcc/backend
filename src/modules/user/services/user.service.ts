@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { Repository } from 'typeorm';
@@ -20,9 +24,24 @@ export class UserService {
     return this.userRepository.findOneBy({ id });
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOneBy({ email });
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userRepository.findOneBy({ username });
+  }
+
   async create(createUserDto: CreateUserDto): Promise<Object> {
     if (!createUserDto.password) {
       throw new Error('비밀번호는 필수 입력값입니다.');
+    }
+
+    const existingUser = await this.userRepository.findOneBy({
+      email: createUserDto.email,
+    });
+    if (existingUser) {
+      throw new ConflictException('이미 등록된 이메일입니다.');
     }
 
     const saltOrRounds = 10;
@@ -35,8 +54,10 @@ export class UserService {
       ...createUserDto,
       password: hashedPassword,
     });
-    this.userRepository.save(user);
-    return { isOk: 1 };
+
+    await this.userRepository.save(user);
+
+    return { message: '회원가입이 성공적으로 이루어졌습니다.' };
   }
 
   async update(id: number, data: Partial<User>): Promise<User> {

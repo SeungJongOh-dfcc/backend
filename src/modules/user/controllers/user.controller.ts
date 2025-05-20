@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { User } from '../entities/user.entity';
@@ -20,9 +21,25 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @Get(':id')
+  @Get('id/:id')
   findOne(@Param('id') id: string): Promise<User | null> {
     return this.userService.findOne(+id);
+  }
+
+  @Get('check-email')
+  async checkEmail(
+    @Query('email') email: string,
+  ): Promise<{ isDuplicate: boolean }> {
+    const existing = await this.userService.findByEmail(email);
+    return { isDuplicate: !!existing };
+  }
+
+  @Get('check-username')
+  async checkUsername(
+    @Query('username') username: string,
+  ): Promise<{ isDuplicate: boolean }> {
+    const existing = await this.userService.findByUsername(username);
+    return { isDuplicate: !!existing };
   }
 
   @Post()

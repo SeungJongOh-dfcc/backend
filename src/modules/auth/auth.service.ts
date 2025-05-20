@@ -53,7 +53,6 @@ export class AuthService {
     userId: number,
     { currentPassword, newPassword }: ChangePasswordDto,
   ): Promise<void> {
-    console.log('userId is:', userId);
     const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
 
