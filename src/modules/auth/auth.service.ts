@@ -14,12 +14,18 @@ import * as bcrypt from 'bcrypt';
 import { UserDto } from '../user/dto/user.dto';
 import { plainToInstance } from 'class-transformer';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { v4 as uuidv4 } from 'uuid';
+import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
+    private mailerService: MailerService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(EmailVerification)
+    private readonly verificationRepository: Repository<EmailVerification>,
   ) {}
 
   async validateUser({
@@ -62,5 +68,86 @@ export class AuthService {
     const hashed = await bcrypt.hash(newPassword, 10);
     user.password = hashed;
     await this.userRepository.save(user);
+  }
+
+  async sendVerificationEmail(email: string) {
+    const token = uuidv4();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30분 후 만료
+
+    // 기존 토큰 삭제 (중복 방지)
+    await this.verificationRepository.delete({ email });
+
+    // 새 토큰 저장
+    const verification = this.verificationRepository.create({
+      email,
+      token,
+      expiresAt,
+      isVerified: false,
+    });
+
+    await this.verificationRepository.save(verification);
+
+    const url = `http://localhost:3000/auth/verify-email?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: '이메일 인증 요청',
+      template: 'verify',
+      context: {
+        verificationUrl: url,
+        username: email,
+      },
+    });
+  }
+
+  async create(email: string, token: string): Promise<EmailVerification> {
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1시간 후
+    const entity = this.verificationRepository.create({
+      email,
+      token,
+      expiresAt,
+    });
+    return this.verificationRepository.save(entity);
+  }
+
+  async verifyToken(token: string): Promise<EmailVerification | null> {
+    return this.verificationRepository.findOneBy({ token });
+  }
+
+  async verifyEmailToken(
+    token: string,
+  ): Promise<{ message: string; email?: string }> {
+    const verification = await this.verificationRepository.findOneBy({ token });
+
+    if (!verification) {
+      throw new BadRequestException('유효하지 않은 토큰입니다.');
+    }
+
+    if (verification.isVerified) {
+      throw new BadRequestException('이미 인증된 이메일입니다.');
+    }
+
+    if (verification.expiresAt < new Date()) {
+      throw new BadRequestException('토큰이 만료되었습니다.');
+    }
+
+    const user = await this.userRepository.findOneBy({
+      email: verification.email,
+    });
+
+    verification.isVerified = true;
+    await this.verificationRepository.save(verification);
+
+    if (!user) {
+      return {
+        message: '이메일 인증이 완료되었습니다. 이제 회원가입을 진행해주세요.',
+        email: verification.email,
+      };
+    }
+
+    user.isVerified = true;
+    await this.userRepository.save(user);
+
+    return { message: '이메일 인증이 완료되었습니다.' };
   }
 }

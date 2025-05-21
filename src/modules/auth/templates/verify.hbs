@@ -1,0 +1,72 @@
+<!-- templates/verify.hbs -->
+
+
+<html lang='ko'>
+  <head>
+    <meta charset='UTF-8' />
+    <title>이메일 인증</title>
+    <style>
+      body {
+        background-color: #f9fafb;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #111827;
+        padding: 40px 20px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      }
+
+      h2 {
+        color: #111827;
+      }
+
+      .btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 24px;
+        background-color: #22c55e;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn:hover {
+        background-color: #16a34a;
+      }
+
+      .fallback-link {
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 14px;
+        color: #6b7280;
+      }
+
+      .url {
+        word-break: break-all;
+        color: #2563eb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <h2>안녕하세요, {{username}}님 👋</h2>
+      <p>계정을 활성화하려면 아래 버튼을 클릭하여 이메일 인증을 완료해주세요.</p>
+      <a href='{{verificationUrl}}' class='btn'>이메일 인증하기</a>
+
+      <div class='fallback-link'>
+        <p>버튼이 작동하지 않나요?</p>
+        <p>아래 링크를 복사하여 브라우저에 붙여넣어 주세요:</p>
+        <p class='url'>{{verificationUrl}}</p>
+      </div>
+    </div>
+  </body>
+</html>
