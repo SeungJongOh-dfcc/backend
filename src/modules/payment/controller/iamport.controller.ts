@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { IamportService } from './iamport.service';
+import { IamportService } from '../service/iamport.service';
 
 @Controller('payment')
 export class IamportController {
