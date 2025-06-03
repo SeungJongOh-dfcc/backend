@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './modules/user/user.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { IamportModule } from './modules/payment/iamport.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
       synchronize: true,
     }),
     UserModule,
+    IamportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
